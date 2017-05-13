@@ -1,41 +1,68 @@
-#include "hid.h"
+#include "dualshock.h"
 
-#define HID_DATA_LEN 256
-#define META_STR_LEN 64
+#include <array>
+#include <algorithm>
+
+static const unsigned int HID_DATA_LEN = 64;
+static const unsigned int META_STR_LEN = 64;
+
+static const unsigned short SONY_VENDOR_ID = 1356;
+// dualshock 4 second edition, dualshock 4, dualshock 3
+static const std::array<unsigned short, 3> SONY_PRODUCT_IDS = {{
+    2508, 1476, 616}};
 
 
-class HID {
+class DualShock {
 	public:
 		t_object x_obj;
         struct hid_device_info* devs;
         hid_device* dev;
         unsigned char hid_data[HID_DATA_LEN];
 
-        void initialize(char* vendor, char* product);
+        void initialize(const char* vendor, const char* product);
         void free_device();
-        void set_device(char* vendor, char* product);
+        void set_device(const char* vendor, const char* product);
+        void set_device(const unsigned short vendor,
+                const unsigned short product);
 		void list_devices();
         void read();
         void teardown();
 };
 
-void HID::initialize(char* vendor, char* product) {
+void DualShock::initialize(const char* vendor, const char* product) {
     devs = hid_enumerate(0x0, 0x0);
-    set_device(vendor, product);
+    // try to find the first available one as a default
+    if (strlen(vendor) == 0 || strlen(product) == 0) {
+        for (auto d = devs; d != nullptr; d = d->next) {
+            if (d->vendor_id != SONY_VENDOR_ID)
+                continue;
+            auto p = std::find(SONY_PRODUCT_IDS.begin(),
+                    SONY_PRODUCT_IDS.end(), d->product_id);
+            if (p != SONY_PRODUCT_IDS.end()) {
+                post("autodetected device %04hx %04hx; attempting to set",
+                        SONY_VENDOR_ID, *p);
+                set_device(SONY_VENDOR_ID, *p);
+                break;
+            }
+        }
+    } else {
+        post("trying device %s %s", vendor, product);
+        set_device(vendor, product);
+    }
     if (dev == nullptr) {
         list_devices();
     }
 }
 
-void HID::list_devices() {
-    for(auto d = devs; d != nullptr; d = d->next) {
+void DualShock::list_devices() {
+    for (auto d = devs; d != nullptr; d = d->next) {
 		post("%ls %ls", d->manufacturer_string, d->product_string);
 		post("\t%04hx %04hx (%ls)", d->vendor_id, d->product_id,
                 d->serial_number);
 	}
 }
 
-void HID::read() {
+void DualShock::read() {
     if (dev == nullptr) {
         return;
     }
@@ -57,28 +84,33 @@ void HID::read() {
     post("read end, %i blocks", block_count);
 }
 
-void HID::free_device() {
+void DualShock::free_device() {
     if (dev != nullptr) {
         hid_close(dev);
         dev = nullptr;
     }
 }
 
-void HID::set_device(char* vendor, char* product) {
+void DualShock::set_device(const char* vendor, const char* product) {
     unsigned short v, p;
-    wchar_t manufacturer[META_STR_LEN], product_string[META_STR_LEN];
 
     if (vendor == nullptr || product == nullptr) {
         return;
     }
 
-    free_device();
     sscanf(vendor, "%hx", &v);
     sscanf(product, "%hx", &p);
-    dev = hid_open(v, p, nullptr);
+    set_device(v, p);
+}
+
+void DualShock::set_device(unsigned short vendor, unsigned short product) {
+    wchar_t manufacturer[META_STR_LEN], product_string[META_STR_LEN];
+
+    free_device();
+    dev = hid_open(vendor, product, nullptr);
 
     if (dev == nullptr) {
-        error("failed to open device %s %s", vendor, product);
+        error("failed to open device %04hx %04hx", vendor, product);
         return;
     }
 
@@ -97,17 +129,18 @@ void HID::set_device(char* vendor, char* product) {
     post("using '%ls %ls' as a controller", manufacturer, product_string);
 }
 
-void HID::teardown() {
+void DualShock::teardown() {
     hid_free_enumeration(devs);
     free_device();
     hid_exit();
 }
 
-void hid_bang(HID *h) {
+void dualshock_list(DualShock *h) {
     h->list_devices();
 }
 
-void hid_set_device(HID *h, t_symbol *_ignored, int argc, t_atom *argv) {
+void dualshock_set_device(DualShock *h, t_symbol *_ignored, int argc,
+        t_atom *argv) {
     if (argc != 2 || argv[0].a_type != A_SYMBOL ||
             argv[1].a_type != A_SYMBOL) {
         error("hid takes vendor_id and product_id strings as arguments");
@@ -118,31 +151,34 @@ void hid_set_device(HID *h, t_symbol *_ignored, int argc, t_atom *argv) {
     h->set_device(argv[0].a_w.w_symbol->s_name, argv[1].a_w.w_symbol->s_name);
 }
 
-void hid_read_data(HID *h) {
+void dualshock_read_data(DualShock *h) {
     h->read();
 }
 
-void* hid_new(t_symbol *vendor, t_symbol *product) {
-    auto h = reinterpret_cast<HID*>(pd_new(hid_class));
+void* dualshock_new(t_symbol *vendor, t_symbol *product) {
+    auto h = reinterpret_cast<DualShock*>(pd_new(dualshock_class));
     h->initialize(vendor->s_name, product->s_name);
     return reinterpret_cast<void*>(h);
 }
 
-void hid_free(HID *h) {
+void dualshock_free(DualShock *h) {
     h->teardown();
 }
 
-void hid_setup() {
-    hid_class = class_new(
-        gensym("hid"), reinterpret_cast<t_newmethod>(hid_new),
-        reinterpret_cast<t_method>(hid_free), sizeof(HID), CLASS_DEFAULT,
-        A_DEFSYMBOL, A_DEFSYMBOL, static_cast<t_atomtype>(0));
+void dualshock_setup() {
+    dualshock_class = class_new(
+        gensym("dualshock"), reinterpret_cast<t_newmethod>(dualshock_new),
+        reinterpret_cast<t_method>(dualshock_free), sizeof(DualShock),
+        CLASS_DEFAULT, A_DEFSYMBOL, A_DEFSYMBOL, static_cast<t_atomtype>(0));
 
-    class_addbang(hid_class, hid_bang);
-    class_addmethod(hid_class, reinterpret_cast<t_method>(hid_bang),
-            gensym("ls"), static_cast<t_atomtype>(0));
-    class_addmethod(hid_class, reinterpret_cast<t_method>(hid_set_device),
-            gensym("open"), A_GIMME, 0);
-    class_addmethod(hid_class, reinterpret_cast<t_method>(hid_read_data),
-            gensym("read"), static_cast<t_atomtype>(0));
+    class_addbang(dualshock_class, dualshock_read_data);
+    class_addmethod(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_read_data), gensym("read"),
+            static_cast<t_atomtype>(0));
+    class_addmethod(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_list), gensym("ls"),
+            static_cast<t_atomtype>(0));
+    class_addmethod(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_set_device), gensym("open"),
+            A_GIMME, 0);
 }

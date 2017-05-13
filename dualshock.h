@@ -1,18 +1,18 @@
-#ifndef _HID_H
-#define _HID_H
+#ifndef _DUALSHOCK_H
+#define _DUALSHOCK_H
 
 #include "hidapi.h"
 
 #include "m_pd.h"
 
 extern "C" {
-    static t_class *hid_class;
+    static t_class *dualshock_class;
 
-	class HID;
-    void hid_bang(HID *h);
-    void* hid_new(t_symbol *vendor, t_symbol *product);
-    void hid_set_device(HID *h, t_symbol *_ignored, int argc, t_atom *argv);
-    void hid_read_data(HID *h);
-    void hid_setup();
+	class DualShock;
+    void dualshock_bang(DualShock *h);
+    void* dualshock_new(t_symbol *vendor, t_symbol *product);
+    void dualshock_set_device(DualShock *h, t_symbol *_ignored, int argc, t_atom *argv);
+    void dualshock_read_data(DualShock *h);
+    void dualshock_setup();
 }
-#endif
+#endif //_DUALSHOCK_H
