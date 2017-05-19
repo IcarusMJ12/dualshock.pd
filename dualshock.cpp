@@ -1,10 +1,13 @@
 #include "dualshock.h"
+#include "hidapi.h"
 
 #include <array>
 #include <algorithm>
 
+#define VENDOR_PRODUCT_FMT "%04hx %04hx"
 static const unsigned int HID_DATA_LEN = 64;
 static const unsigned int META_STR_LEN = 64;
+static const unsigned int DELAY = 4;
 
 static const unsigned short SONY_VENDOR_ID = 1356;
 // dualshock 4 second edition, dualshock 4, dualshock 3
@@ -14,10 +17,13 @@ static const std::array<unsigned short, 3> SONY_PRODUCT_IDS = {{
 
 class DualShock {
 	public:
-		t_object x_obj;
+		t_object self;
+        t_outlet* outlet;
         struct hid_device_info* devs;
         hid_device* dev;
+        t_clock* clock;
         unsigned char hid_data[HID_DATA_LEN];
+        bool is_polling;
 
         void initialize(const char* vendor, const char* product);
         void free_device();
@@ -52,12 +58,18 @@ void DualShock::initialize(const char* vendor, const char* product) {
     if (dev == nullptr) {
         list_devices();
     }
+
+    clock = clock_new(this, reinterpret_cast<t_method>(dualshock_read));
+    clock_setunit(clock, DELAY, 0);
+    is_polling = false;
+
+    outlet = outlet_new(&self, 0);
 }
 
 void DualShock::list_devices() {
     for (auto d = devs; d != nullptr; d = d->next) {
 		post("%ls %ls", d->manufacturer_string, d->product_string);
-		post("\t%04hx %04hx (%ls)", d->vendor_id, d->product_id,
+		post("\t" VENDOR_PRODUCT_FMT " (%ls)", d->vendor_id, d->product_id,
                 d->serial_number);
 	}
 }
@@ -68,20 +80,25 @@ void DualShock::read() {
     }
 
     int result = 0, block_count = -1;
-    post("read start");
+    // post("read start");
     do {
         if (result == -1) {
             error("couldn't read from device");
             return;
         }
+        /*
         for(int i = 0; i < result; i++) {
             startpost("%02hx ", hid_data[i]);
         }
         endpost();
+        */
         result = hid_read(dev, hid_data, HID_DATA_LEN);
         block_count += 1;
     } while(result != 0); 
-    post("read end, %i blocks", block_count);
+    // post("read end, %i blocks", block_count);
+    if (is_polling) {
+        clock_delay(clock, 1);
+    }
 }
 
 void DualShock::free_device() {
@@ -91,12 +108,22 @@ void DualShock::free_device() {
     }
 }
 
+void DualShock::start() {
+    if (!is_polling) {
+        is_polling = true;
+        clock_delay(clock, 1);
+    }
+}
+
+void DualShock::stop() {
+    if (is_polling) {
+        is_polling = false;
+        clock_unset(clock);
+    }
+}
+
 void DualShock::set_device(const char* vendor, const char* product) {
     unsigned short v, p;
-
-    if (vendor == nullptr || product == nullptr) {
-        return;
-    }
 
     sscanf(vendor, "%hx", &v);
     sscanf(product, "%hx", &p);
@@ -110,7 +137,7 @@ void DualShock::set_device(unsigned short vendor, unsigned short product) {
     dev = hid_open(vendor, product, nullptr);
 
     if (dev == nullptr) {
-        error("failed to open device %04hx %04hx", vendor, product);
+        error("failed to open device " VENDOR_PRODUCT_FMT, vendor, product);
         return;
     }
 
@@ -130,9 +157,12 @@ void DualShock::set_device(unsigned short vendor, unsigned short product) {
 }
 
 void DualShock::teardown() {
+    stop();
+    clock_free(clock);
     hid_free_enumeration(devs);
     free_device();
     hid_exit();
+    outlet_free(outlet);
 }
 
 void dualshock_list(DualShock *h) {
@@ -151,7 +181,7 @@ void dualshock_set_device(DualShock *h, t_symbol *_ignored, int argc,
     h->set_device(argv[0].a_w.w_symbol->s_name, argv[1].a_w.w_symbol->s_name);
 }
 
-void dualshock_read_data(DualShock *h) {
+void dualshock_read(DualShock *h) {
     h->read();
 }
 
@@ -165,15 +195,23 @@ void dualshock_free(DualShock *h) {
     h->teardown();
 }
 
+void dualshock_start(DualShock *h) {
+    h->start();
+}
+
+void dualshock_stop(DualShock *h) {
+    h->stop();
+}
+
 void dualshock_setup() {
     dualshock_class = class_new(
         gensym("dualshock"), reinterpret_cast<t_newmethod>(dualshock_new),
         reinterpret_cast<t_method>(dualshock_free), sizeof(DualShock),
         CLASS_DEFAULT, A_DEFSYMBOL, A_DEFSYMBOL, static_cast<t_atomtype>(0));
 
-    class_addbang(dualshock_class, dualshock_read_data);
+    class_addbang(dualshock_class, dualshock_read);
     class_addmethod(dualshock_class,
-            reinterpret_cast<t_method>(dualshock_read_data), gensym("read"),
+            reinterpret_cast<t_method>(dualshock_read), gensym("read"),
             static_cast<t_atomtype>(0));
     class_addmethod(dualshock_class,
             reinterpret_cast<t_method>(dualshock_list), gensym("ls"),
@@ -181,4 +219,10 @@ void dualshock_setup() {
     class_addmethod(dualshock_class,
             reinterpret_cast<t_method>(dualshock_set_device), gensym("open"),
             A_GIMME, 0);
+    class_addmethod(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_start), gensym("start"),
+            static_cast<t_atomtype>(0));
+    class_addmethod(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_stop), gensym("stop"),
+            static_cast<t_atomtype>(0));
 }
