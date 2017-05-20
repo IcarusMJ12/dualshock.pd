@@ -13,6 +13,7 @@ extern "C" {
     void dualshock_read(DualShock *h);
     void dualshock_start(DualShock *h);
     void dualshock_stop(DualShock *h);
+    void dualshock_toggle(DualShock *h, t_floatarg f);
     void dualshock_setup();
 }
 #endif //_DUALSHOCK_H

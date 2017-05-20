@@ -11,7 +11,7 @@ default: dualshock.pd_darwin
 
 remote: remote.pd_darwin
 
-dualshock.pd_darwin: $(SRC)
+dualshock.pd_darwin: $(SRC) dualshock.h
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -shared -o $(LIBNAME) $(SRC)
 
 remote.pd_darwin: vendor/remote.c

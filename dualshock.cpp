@@ -272,6 +272,14 @@ void dualshock_stop(DualShock *h) {
     h->stop();
 }
 
+void dualshock_toggle(DualShock *h, t_floatarg f) {
+    if (f > 0) {
+        h->start();
+    } else {
+        h->stop();
+    }
+}
+
 void dualshock_setup() {
     dualshock_class = class_new(
         gensym("dualshock"), reinterpret_cast<t_newmethod>(dualshock_new),
@@ -291,6 +299,8 @@ void dualshock_setup() {
     class_addmethod(dualshock_class,
             reinterpret_cast<t_method>(dualshock_start), gensym("start"),
             static_cast<t_atomtype>(0));
+    class_addfloat(dualshock_class,
+            reinterpret_cast<t_method>(dualshock_toggle));
     class_addmethod(dualshock_class,
             reinterpret_cast<t_method>(dualshock_stop), gensym("stop"),
             static_cast<t_atomtype>(0));
