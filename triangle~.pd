@@ -1,0 +1,10 @@
+#N canvas 109 329 450 300 10;
+#X obj 14 44 phasor~;
+#X obj 14 71 expr~ abs($v1 - 0.5) * 2;
+#X obj 14 98 outlet~;
+#X obj 77 17 inlet;
+#X obj 14 17 inlet~;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 3 0 0 1;
+#X connect 4 0 0 0;

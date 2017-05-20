@@ -1,0 +1,6 @@
+#N canvas 783 184 450 300 10;
+#X obj 42 41 inlet;
+#X obj 42 66 dualshock;
+#X obj 42 90 remote;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
