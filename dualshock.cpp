@@ -3,8 +3,11 @@
 
 #include <array>
 #include <algorithm>
+#include <functional>
 
 #define VENDOR_PRODUCT_FMT "%04hx %04hx"
+#define HID_ARRAY std::array<uint8_t, HID_DATA_LEN>
+
 static const unsigned int HID_DATA_LEN = 64;
 static const unsigned int META_STR_LEN = 64;
 static const unsigned int DELAY = 4;
@@ -14,15 +17,61 @@ static const unsigned short SONY_VENDOR_ID = 1356;
 static const std::array<unsigned short, 3> SONY_PRODUCT_IDS = {{
     2508, 1476, 616}};
 
+class Event {
+    public:
+        const char* name;
+        const std::function<uint8_t(const HID_ARRAY)> get_value;
+        Event(const char* name,
+            std::function<uint8_t(const HID_ARRAY)> get_value):
+            name(name), get_value(get_value) {}
+};
+
+static const std::array<const Event, 22> EVENTS = {{
+    Event("LX", [](const HID_ARRAY d) { return d[1]; }),
+
+    Event("LY", [](const HID_ARRAY d) { return d[2]; }),
+
+    Event("RX", [](const HID_ARRAY d) { return d[3]; }),
+
+    Event("RY", [](const HID_ARRAY d) { return d[4]; }),
+
+    Event("DN", [](const HID_ARRAY d) {
+        const auto v = d[5] & 0xf; return v == 0x0 || v == 0x1 || v == 0x7; }),
+    Event("DE", [](const HID_ARRAY d) {
+        const auto v = d[5] & 0xf; return v == 0x1 || v == 0x2 || v == 0x3; }),
+    Event("DS", [](const HID_ARRAY d) {
+        const auto v = d[5] & 0xf; return v == 0x3 || v == 0x4 || v == 0x5; }),
+    Event("DW", [](const HID_ARRAY d) {
+        const auto v = d[5] & 0xf; return v == 0x5 || v == 0x6 || v == 0x7; }),
+    Event("square", [](const HID_ARRAY d) { return (d[5] & 0x10) != 0; }),
+    Event("cross", [](const HID_ARRAY d) { return (d[5] & 0x20) != 0; }),
+    Event("circle", [](const HID_ARRAY d) { return (d[5] & 0x40) != 0; }),
+    Event("triangle", [](const HID_ARRAY d) { return (d[5] & 0x80) != 0; }),
+
+    Event("L1", [](const HID_ARRAY d) { return (d[6] & 0x1) != 0; }),
+    Event("R1", [](const HID_ARRAY d) { return (d[6] & 0x2) != 0; }),
+    Event("share", [](const HID_ARRAY d) { return (d[6] & 0x10) != 0; }),
+    Event("options", [](const HID_ARRAY d) { return (d[6] & 0x20) != 0; }),
+    Event("L3", [](const HID_ARRAY d) { return (d[6] & 0x40) != 0; }),
+    Event("R3", [](const HID_ARRAY d) { return (d[6] & 0x80) != 0; }),
+
+    Event("PS", [](const HID_ARRAY d) { return (d[7] & 0x1) != 0; }),
+    Event("touchpad", [](const HID_ARRAY d) { return (d[7] & 0x2) != 0; }),
+
+    Event("L2", [](const HID_ARRAY d) { return d[8]; }),
+
+    Event("R2", [](const HID_ARRAY d) { return d[9]; }),
+}};
 
 class DualShock {
 	public:
-		t_object self;
+		t_object pd_object;
         t_outlet* outlet;
         struct hid_device_info* devs;
         hid_device* dev;
         t_clock* clock;
-        unsigned char hid_data[HID_DATA_LEN];
+        HID_ARRAY hid_data;
+        HID_ARRAY hid_data_prev;
         bool is_polling;
 
         void initialize(const char* vendor, const char* product);
@@ -32,6 +81,10 @@ class DualShock {
                 const unsigned short product);
 		void list_devices();
         void read();
+        void emit_event(const char* name, uint8_t prev,
+                uint8_t current);
+        void start();
+        void stop();
         void teardown();
 };
 
@@ -45,7 +98,8 @@ void DualShock::initialize(const char* vendor, const char* product) {
             auto p = std::find(SONY_PRODUCT_IDS.begin(),
                     SONY_PRODUCT_IDS.end(), d->product_id);
             if (p != SONY_PRODUCT_IDS.end()) {
-                post("autodetected device %04hx %04hx; attempting to set",
+                post("autodetected device " VENDOR_PRODUCT_FMT
+                     "; attempting to set",
                         SONY_VENDOR_ID, *p);
                 set_device(SONY_VENDOR_ID, *p);
                 break;
@@ -63,7 +117,7 @@ void DualShock::initialize(const char* vendor, const char* product) {
     clock_setunit(clock, DELAY, 0);
     is_polling = false;
 
-    outlet = outlet_new(&self, 0);
+    outlet = outlet_new(&pd_object, 0);
 }
 
 void DualShock::list_devices() {
@@ -92,13 +146,28 @@ void DualShock::read() {
         }
         endpost();
         */
-        result = hid_read(dev, hid_data, HID_DATA_LEN);
+        for (auto e : EVENTS) {
+            emit_event(e.name, e.get_value(hid_data_prev),
+                    e.get_value(hid_data));
+        }
+        hid_data_prev = hid_data;
+        result = hid_read(dev, hid_data.data(), HID_DATA_LEN);
         block_count += 1;
     } while(result != 0); 
     // post("read end, %i blocks", block_count);
     if (is_polling) {
         clock_delay(clock, 1);
     }
+}
+
+void DualShock::emit_event(const char* name, uint8_t prev,
+        uint8_t current) {
+    if (prev == current) {
+        return;
+    }
+    t_atom event;
+    SETFLOAT(&event, current);
+    outlet_anything(outlet, gensym(name), 1, &event);
 }
 
 void DualShock::free_device() {

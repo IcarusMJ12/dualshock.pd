@@ -1,2 +1,3 @@
-dualshock.pd_darwin
+*.pd_darwin
 m_pd.h
+*.swp
