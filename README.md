@@ -14,3 +14,8 @@ tweak the Makefile, and patches are welcome.
     * optionally also `make remote` if you are not using PD Extended or otherwise have [Maxlib](https://puredata.info/downloads/maxlib)
 5. Add this path to your Pure Data Preferences -> Path.
 6. Make a `dualshock` object in your patch and enjoy!
+
+
+## TODO
+
+Better touchpad support.  Maybe gyros/accelerometer also.
