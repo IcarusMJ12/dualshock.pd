@@ -1,0 +1,62 @@
+#N canvas 592 162 361 490 10;
+#X obj 126 87 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 69 88 ls;
+#X msg 144 87 read;
+#X obj 146 154 dualshock;
+#X msg 204 88 start;
+#X msg 250 88 stop;
+#X obj 176 325 tgl 15 0 empty triangle empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 159 343 tgl 15 0 empty square empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 177 360 tgl 15 0 empty cross empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 194 342 tgl 15 0 empty circle empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 148 314 tgl 15 0 empty options empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 113 314 tgl 15 0 empty share empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 177 289 tgl 15 0 empty R1 empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 85 288 tgl 15 0 empty L1 empty 17 7 0 10 -262144 -1 -1 0 1;
+#X floatatom 78 265 5 0 0 0 - L2 -, f 5;
+#X floatatom 169 266 5 0 0 0 - R2 -, f 5;
+#X floatatom 167 391 5 0 0 0 - RX -, f 5;
+#X floatatom 80 389 5 0 0 0 - LX -, f 5;
+#X obj 87 425 tgl 15 0 empty L3 empty 17 7 0 10 -262144 -1 -1 0 1;
+#X obj 176 426 tgl 15 0 empty R3 empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 131 389 tgl 15 0 empty PS empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X obj 131 314 tgl 15 0 empty touchpad empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X floatatom 81 406 5 0 0 0 - LY -, f 5;
+#X floatatom 167 408 5 0 0 0 - RY -, f 5;
+#X obj 146 180 remote;
+#X obj 176 325 tgl 15 0 empty triangle empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 159 343 tgl 15 0 empty square empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 177 360 tgl 15 0 empty cross empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 194 342 tgl 15 0 empty circle empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X obj 88 326 tgl 15 0 empty DN empty 17 7 0 10 -262144 -1 -1 0 1;
+#X obj 71 344 tgl 15 0 empty DW empty 17 7 0 10 -262144 -1 -1 0 1;
+#X obj 89 361 tgl 15 0 empty DS empty 17 7 0 10 -262144 -1 -1 0 1;
+#X obj 106 343 tgl 15 0 empty DE empty 17 7 0 10 -262144 -1 -1 0 1
+;
+#X text 204 67 start/stop polling;
+#X obj 250 111 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X text 108 45 read buffers once;
+#X text 36 67 list devices;
+#X connect 0 0 3 0;
+#X connect 1 0 3 0;
+#X connect 2 0 3 0;
+#X connect 3 0 24 0;
+#X connect 4 0 3 0;
+#X connect 5 0 3 0;
+#X connect 34 0 3 0;
