@@ -20,13 +20,13 @@ static const std::array<unsigned short, 3> SONY_PRODUCT_IDS = {{
 class Event {
     public:
         const char* name;
-        const std::function<uint8_t(const HID_ARRAY)> get_value;
+        const std::function<int(const HID_ARRAY)> get_value;
         Event(const char* name,
-            std::function<uint8_t(const HID_ARRAY)> get_value):
+            std::function<int(const HID_ARRAY)> get_value):
             name(name), get_value(get_value) {}
 };
 
-static const std::array<const Event, 22> EVENTS = {{
+static const std::array<const Event, 26> EVENTS = {{
     Event("LX", [](const HID_ARRAY d) { return d[1]; }),
 
     Event("LY", [](const HID_ARRAY d) { return d[2]; }),
@@ -61,6 +61,10 @@ static const std::array<const Event, 22> EVENTS = {{
     Event("L2", [](const HID_ARRAY d) { return d[8]; }),
 
     Event("R2", [](const HID_ARRAY d) { return d[9]; }),
+    Event("touchpad1x", [](const HID_ARRAY d) { return (d[37] & 0xf) << 8 | d[36]; }),
+    Event("touchpad1y", [](const HID_ARRAY d) { return d[38] << 4 | (d[37] >> 4); }),
+    Event("touchpad2x", [](const HID_ARRAY d) { return (d[41] & 0xf) << 8 | d[40]; }),
+    Event("touchpad2y", [](const HID_ARRAY d) { return d[42] << 4 | (d[41] >> 4); }),
 }};
 
 class DualShock {
@@ -81,8 +85,8 @@ class DualShock {
                 const unsigned short product);
 		void list_devices();
         void read();
-        void emit_event(const char* name, uint8_t prev,
-                uint8_t current);
+        void emit_event(const char* name, int prev,
+                int current);
         void start();
         void stop();
         void teardown();
@@ -160,8 +164,8 @@ void DualShock::read() {
     }
 }
 
-void DualShock::emit_event(const char* name, uint8_t prev,
-        uint8_t current) {
+void DualShock::emit_event(const char* name, int prev,
+        int current) {
     if (prev == current) {
         return;
     }

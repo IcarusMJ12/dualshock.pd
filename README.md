@@ -18,4 +18,4 @@ tweak the Makefile, and patches are welcome.
 
 ## TODO
 
-Better touchpad support.  Maybe gyros/accelerometer also.
+Maybe add gyros/accelerometer support.
