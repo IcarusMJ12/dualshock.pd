@@ -4,7 +4,7 @@ SRC = dualshock.cpp
 CC = clang
 PREFIX ?= /opt/local
 
-CXXFLAGS = -I$(PD_SRC_PATH) -I$(PREFIX)/include/hidapi -stdlib=libc++ -std=c++14 -undefined dynamic_lookup -Wall -Werror
+CXXFLAGS = -I$(PD_SRC_PATH) -I$(PREFIX)/include/hidapi -stdlib=libc++ -std=c++14 -undefined dynamic_lookup -Wall -Werror -fno-rtti -Os -fno-exceptions
 LDFLAGS = -L$(PREFIX)/lib -lhidapi
 
 default: dualshock.pd_darwin
