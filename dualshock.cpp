@@ -68,8 +68,8 @@ static const std::array<const Event, 26> EVENTS = {{
 }};
 
 class DualShock {
-	public:
-		t_object pd_object;
+    public:
+        t_object pd_object;
         t_outlet* outlet;
         struct hid_device_info* devs;
         hid_device* dev;
@@ -83,7 +83,7 @@ class DualShock {
         void set_device(const char* vendor, const char* product);
         void set_device(const unsigned short vendor,
                 const unsigned short product);
-		void list_devices();
+        void list_devices();
         void read();
         void emit_event(const char* name, int prev,
                 int current);
@@ -126,10 +126,10 @@ void DualShock::initialize(const char* vendor, const char* product) {
 
 void DualShock::list_devices() {
     for (auto d = devs; d != nullptr; d = d->next) {
-		post("%ls %ls", d->manufacturer_string, d->product_string);
-		post("\t" VENDOR_PRODUCT_FMT " (%ls)", d->vendor_id, d->product_id,
+        post("%ls %ls", d->manufacturer_string, d->product_string);
+        post("\t" VENDOR_PRODUCT_FMT " (%ls)", d->vendor_id, d->product_id,
                 d->serial_number);
-	}
+    }
 }
 
 void DualShock::read() {
