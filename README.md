@@ -16,6 +16,15 @@ tweak the Makefile, and patches are welcome.
 6. Make a `dualshock` object in your patch and enjoy!
 
 
+## Usage
+
+`start` starts polling, `stop` stops it; the outlet produces `<key> <value>` messages.
+
+Try one of the sample dualshock patches included, or print the output to see what the messages are like (caution, the joysticks can get pretty busy), or consult the source for all possible messages.
+
+NOTE: The DualShock 4 controller sample rate is 4 milliseconds, but because PD operates at sampling rate speed that is not divisible by 4 ms, the external samples every 1 millisecond, so you might get up to around 1 millsecond jitter.  This probably shouldn't affect things, but if it does it should be easy to change in the source file.
+
+
 ## TODO
 
 Maybe add gyros/accelerometer support.
