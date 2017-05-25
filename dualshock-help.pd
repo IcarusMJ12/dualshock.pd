@@ -62,10 +62,12 @@
 #X floatatom 139 259 5 0 0 0 - touchpad1y -, f 5;
 #X floatatom 177 241 5 0 0 0 - touchpad2x -, f 5;
 #X floatatom 177 259 5 0 0 0 - touchpad2y -, f 5;
+#X obj 197 180 print;
 #X connect 0 0 3 0;
 #X connect 1 0 3 0;
 #X connect 2 0 3 0;
 #X connect 3 0 24 0;
+#X connect 3 0 41 0;
 #X connect 4 0 3 0;
 #X connect 5 0 3 0;
 #X connect 34 0 3 0;
