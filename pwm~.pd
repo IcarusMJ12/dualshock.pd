@@ -1,4 +1,4 @@
-#N canvas 94 487 450 300 10;
+#N canvas 449 261 450 300 10;
 #X obj 24 120 expr~ $v1 > $v2;
 #X obj 111 19 inlet;
 #X obj 111 44 moses 127;
@@ -8,6 +8,9 @@
 #X obj 24 82 phasor~;
 #X obj 162 77 expr ($f1 - 127) / 257 + 0.5;
 #X obj 24 15 inlet~;
+#X obj 186 16 loadbang;
+#X msg 186 40 0.5;
+#X msg 224 40 20000;
 #X connect 0 0 4 0;
 #X connect 1 0 2 0;
 #X connect 2 0 5 0;
@@ -17,3 +20,7 @@
 #X connect 6 0 0 0;
 #X connect 7 0 0 1;
 #X connect 8 0 6 0;
+#X connect 9 0 10 0;
+#X connect 9 0 11 0;
+#X connect 10 0 0 1;
+#X connect 11 0 4 1;
