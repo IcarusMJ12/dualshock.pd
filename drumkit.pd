@@ -1,4 +1,4 @@
-#N canvas 261 125 910 681 10;
+#N canvas 271 56 910 681 10;
 #X obj 10 137 sampler samples/Kick-Drum-1.wav;
 #X obj 26 31 dualshock-broadcast;
 #X obj 26 10 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1 1
@@ -85,7 +85,6 @@
 #X text 761 291 5 (flange);
 #X obj 152 545 delread~ d1l 5;
 #X obj 355 564 delread~ d1r 5;
-#X floatatom 479 441 5 0 0 0 - - -, f 5;
 #X obj 506 406 clip 0 128;
 #X obj 576 402 clip 0 128;
 #X obj 652 401 clip 0 128;
@@ -135,8 +134,8 @@
 #X connect 26 0 55 0;
 #X connect 27 0 23 1;
 #X connect 27 0 56 0;
-#X connect 46 0 90 0;
-#X connect 47 0 91 0;
+#X connect 46 0 89 0;
+#X connect 47 0 90 0;
 #X connect 48 0 46 0;
 #X connect 49 0 47 0;
 #X connect 50 0 23 0;
@@ -155,13 +154,13 @@
 #X connect 63 0 23 1;
 #X connect 64 0 62 0;
 #X connect 65 0 63 0;
-#X connect 68 0 92 0;
+#X connect 68 0 91 0;
 #X connect 69 0 70 0;
 #X connect 70 0 71 0;
 #X connect 71 0 77 1;
 #X connect 71 0 79 1;
 #X connect 72 0 68 0;
-#X connect 73 0 93 0;
+#X connect 73 0 92 0;
 #X connect 74 0 75 0;
 #X connect 75 0 76 0;
 #X connect 76 0 80 1;
@@ -173,16 +172,15 @@
 #X connect 81 0 23 1;
 #X connect 83 0 80 0;
 #X connect 84 0 81 0;
-#X connect 86 0 51 0;
-#X connect 86 0 85 0;
-#X connect 87 0 59 0;
-#X connect 88 0 69 0;
-#X connect 89 0 74 0;
+#X connect 85 0 51 0;
+#X connect 86 0 59 0;
+#X connect 87 0 69 0;
+#X connect 88 0 74 0;
+#X connect 89 0 85 0;
 #X connect 90 0 86 0;
 #X connect 91 0 87 0;
 #X connect 92 0 88 0;
-#X connect 93 0 89 0;
-#X connect 95 0 77 0;
-#X connect 96 0 79 0;
+#X connect 94 0 77 0;
+#X connect 95 0 79 0;
+#X connect 96 0 22 0;
 #X connect 97 0 22 0;
-#X connect 98 0 22 0;
